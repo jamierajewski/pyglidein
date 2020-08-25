@@ -47,7 +47,7 @@ def condor_download(version):
     subprocess.check_call(['tar', '-zxf', 'V'+version+'.tar.gz'])
     return 'htcondor-'+version
 
-def condor_build(version='8.6.1'):
+def condor_build(version='8.9.7'):
     dirname = condor_download(version)
     initial_dir = os.getcwd()
     os.chdir(dirname)
