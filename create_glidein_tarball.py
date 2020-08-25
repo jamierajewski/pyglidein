@@ -40,40 +40,6 @@ def libuuid_build():
     finally:
         os.chdir(initial_dir)
 
-def parrot_download(version):
-    url = 'http://ccl.cse.nd.edu/software/files/cctools-'+version+'-source.tar.gz'
-    subprocess.check_call(['wget', url])
-    subprocess.check_call(['tar', '-zxf', 'cctools-'+version+'-source.tar.gz'])
-    return 'cctools-'+version+'-source'
-
-def parrot_build(version='6.0.14'):
-    cvmfs = cvmfs_build()
-    dirname = parrot_download(version)
-    initial_dir = os.getcwd()
-    os.chdir(dirname)
-    try:
-        if os.path.exists('release_dir'):
-            shutil.rmtree('release_dir')
-        os.mkdir('release_dir')
-        options = ['--without-system-sand',
-                   '--without-system-allpairs',
-                   '--without-system-wavefront',
-                   '--without-system-makeflow',
-                   #'--without-system-ftp-lite',
-                   #'--without-system-chirp',
-                   '--without-system-umbrella',
-                   '--without-system-resource_monitor',
-                   '--without-system-doc',
-                   '--with-cvmfs-path',cvmfs,
-                   '--prefix',os.path.join(os.getcwd(),'release_dir'),
-                  ]
-        subprocess.check_call(['./configure']+options)
-        subprocess.check_call(['make'])
-        subprocess.check_call(['make','install'])
-        return os.path.join(initial_dir,dirname,'release_dir')
-    finally:
-        os.chdir(initial_dir)
-
 def condor_download(version):
     version = version.replace('.','_')
     url = 'https://github.com/htcondor/htcondor/archive/V'+version+'.tar.gz'
@@ -147,8 +113,6 @@ def main():
                       help='Location of template directory')
     parser.add_option('--htcondor-version',dest='condor',default=None,
                       help='HTCondor version to use')
-    parser.add_option('--parrot-version',dest='parrot',default=None,
-                      help='Parrot (cctools) version to use')
     parser.add_option('-o','--output',dest='output',default='glidein.tar.gz',
                       help='output tarball name')
     (options, args) = parser.parse_args()
@@ -161,10 +125,6 @@ def main():
     tarfile_name = os.path.abspath(os.path.expandvars(os.path.expanduser(options.output)))
     try:
         os.chdir(d)
-        parrot_opts = {}
-        if options.parrot:
-            parrot_opts['version'] = options.parrot
-        parrot_path = parrot_build(**parrot_opts)
         condor_opts = {}
         if options.condor:
             condor_opts['version'] = options.condor
@@ -178,8 +138,6 @@ def main():
             tar.add('.',arcname='glideinExec',recursive=False)
             for f in os.listdir(condor_path):
                 tar.add(os.path.join(condor_path,f),arcname=os.path.join('glideinExec',f))
-            tar.add(os.path.join(parrot_path,'bin','parrot_run'),arcname=os.path.join('GLIDEIN_PARROT','parrot_run'))
-            tar.add(os.path.join(parrot_path,'lib','libparrot_helper.so'),arcname=os.path.join('GLIDEIN_PARROT','libparrot_helper.so'))
     finally:
         os.chdir(curdir)
         shutil.rmtree(d)
