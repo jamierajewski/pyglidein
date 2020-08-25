@@ -40,41 +40,6 @@ def libuuid_build():
     finally:
         os.chdir(initial_dir)
 
-def cvmfs_download():
-    url = 'https://github.com/cvmfs/cvmfs/archive/cvmfs-2.3.5.tar.gz'
-    #url = 'https://github.com/cvmfs/cvmfs/archive/libcvmfs-stable.tar.gz'
-    subprocess.check_call(['wget', url])
-    subprocess.check_call(['tar', '-zxf', 'cvmfs-2.3.5.tar.gz'])
-    return 'cvmfs-cvmfs-2.3.5'
-
-def cvmfs_build():
-    libuuid = libuuid_build()
-    dirname = cvmfs_download()
-    initial_dir = os.getcwd()
-    os.chdir(dirname)
-    try:
-        if os.path.exists('release_dir'):
-            shutil.rmtree('release_dir')
-        os.mkdir('release_dir')
-        options = ['-Wno-dev',
-                   '-DINSTALL_MOUNT_SCRIPTS=OFF',
-                   '-DBUILD_SERVER=OFF',
-                   '-DBUILD_CVMFS=OFF',
-                   '-DBUILD_LIBCVMFS=ON',
-                   '-DINSTALL_BASH_COMPLETION=OFF',
-                   '-DUUID_LIBRARY:FILE='+os.path.join(libuuid,'lib','libuuid.a'),
-                   '-DUUID_INCLUDE_DIR:PATH='+os.path.join(libuuid,'include'),
-                   '-DCMAKE_INSTALL_PREFIX='+os.path.join(os.getcwd(),'release_dir'),
-                  ]
-        subprocess.check_call(['cmake']+options)
-        subprocess.check_call(['make','libpacparser'])
-        os.chdir('cvmfs')
-        subprocess.check_call(['make'])
-        subprocess.check_call(['make','install'])
-        return os.path.join(initial_dir,dirname,'release_dir')
-    finally:
-        os.chdir(initial_dir)
-
 def parrot_download(version):
     url = 'http://ccl.cse.nd.edu/software/files/cctools-'+version+'-source.tar.gz'
     subprocess.check_call(['wget', url])
